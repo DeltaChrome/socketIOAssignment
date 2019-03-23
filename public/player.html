@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="/js/aframe-v0.8.2.min.js"></script>
+        <script src="js/aframe-teleport-controls.js"></script>
+        <script src="js/aframe-physics-system.js"></script>
+        <script src="/js/add-a-frame.js"></script>
+
+        <!-- some very nice color buttons -->
+        <button id="red" style="background-color:red; color:whitesmoke;">JOIN GUESS WORLD</button>
+        <!-- <button id="blue" style="background-color:blue; color:whitesmoke;">JOIN MOBILE WORLD</button> -->
+
+        <input type="button" onclick="location.href='mobile.html';" value="JOIN CODE WORLD" />
+
+        <!-- <button id="green" style="background-color:green; color:whitesmoke;">GREEN</button> -->
+        <!-- <button id="blue" style="background-color:blue; color:whitesmoke;">BLUE</button> -->
+
+        <!-- scripts go to bottom if you want them to execute AFTER the rest of the web page renders -->
+        <script src="/socket.io/socket.io.js"></script>
+        <script>//this script will be the controller script of player 1
+            let socket = io();
+
+            //default connect event
+            socket.on('connect', function() {
+                console.log("connected!");
+            });
+            window.GUESS_1 = 0;
+            window.GUESS_2 = 0;
+            window.GUESS_3 = 0;
+            window.NUM_GUESSES = 0;
+            window.ALL_CORRECT = false;
+            //let's send some events to the server to pass on. Programmatic telephone game!
+            //querySelector() is a more modern and versatile function of getElementById()
+            //#name or class
+            //.name for classes
+            //etc.
+            //https://developer.mozilla.org/en-US/docs/Web/API/Document/querySelector 
+            //note that querySelector can also be used on elements so that you only search for their children
+            //instead of all elements within the "document"
+            document.querySelector('#red').addEventListener('click', function () {
+                    socket.emit('red');
+
+                    //CREATE AFRAME ENVIRO
+                    let addAFrame = document.querySelector('body');
+                    let scene = document.createElement('a-scene');
+
+                    console.log("building AFRAME environment...");
+                    scene.setAttribute('background', 'color: #1e3254')
+                    addAFrame.appendChild(scene);
+
+                    scene = document.querySelector('a-scene')
+
+                    let cameraRig = document.createElement('a-entity');
+                    cameraRig.setAttribute('id','cameraRig');
+                    cameraRig.setAttribute('position', '0 1.75 0');
+                    scene.appendChild(cameraRig);
+
+                    let camera = document.createElement('a-entity');
+                    camera.setAttribute('camera', {});
+                    camera.setAttribute('wasd-controls', {});
+                    camera.setAttribute('look-controls', {});
+                    camera.setAttribute('id', 'head');
+                    
+                    cameraRig = document.querySelector('#cameraRig');
+
+                    cameraRig.appendChild(camera);
+
+                    let cursor = document.createElement('a-entity');
+                    cursor.setAttribute('cursor', 'fuse:true; fuseTimeout:500; rayOrigin:mouse;');
+                    camera.appendChild(cursor);
+
+                    let floor = document.createElement('a-entity');
+                    floor.setAttribute('geometry','primitive: plane; width: 100; height: 100;');
+                    floor.setAttribute('rotation','-90 0 0');
+                    floor.setAttribute('material', 'color: #111419')
+                    floor.setAttribute('id', 'floor');
+
+                    scene.appendChild(floor);
+
+                });
+
+            socket.on('color_change', function(positionColoursJSON) {//this can be used to change object positions, colour and other actions
+                
+                console.log("first game");
+
+                let positionColours = JSON.parse(positionColoursJSON);
+                let scene = document.querySelector('a-scene');
+                let color = "rgb(" + positionColours.pos1Colour.r + "," + positionColours.pos1Colour.g + "," + positionColours.pos1Colour.b + ")";
+                //answer key
+                let pos1 = document.createElement('a-entity');
+                pos1.setAttribute('geometry', 'primitive: box; width: 2; height: 2; depth: 2;');
+                pos1.setAttribute('position', '0 4 -4');
+                pos1.setAttribute('material', 'color:' + color);
+                pos1.setAttribute('visible','false');
+                pos1.setAttribute('id', 'trueposition1');
+                
+                scene.appendChild(pos1);
+                
+                color = "rgb(" + positionColours.pos2Colour.r + "," + positionColours.pos2Colour.g + "," + positionColours.pos2Colour.b + ")";
+                let pos2 = document.createElement('a-entity');
+                pos2.setAttribute('geometry', 'primitive: box; width: 2; height: 2; depth: 2;');
+                pos2.setAttribute('position', '3 4 -4');
+                pos2.setAttribute('material', 'color: '+ color);
+                pos2.setAttribute('visible','false');
+                pos2.setAttribute('id', 'trueposition2');
+
+                scene.appendChild(pos2);
+
+                color = "rgb(" + positionColours.pos3Colour.r + "," + positionColours.pos3Colour.g + "," + positionColours.pos3Colour.b + ")";
+                let pos3 = document.createElement('a-entity');
+                pos3.setAttribute('geometry', 'primitive: box; width: 2; height: 2; depth: 2;');
+                pos3.setAttribute('position', '6 4 -4');
+                pos3.setAttribute('material', 'color: '+ color);
+                pos3.setAttribute('visible','false');
+                pos3.setAttribute('id', 'trueposition3');
+
+                scene.appendChild(pos3);
+
+                color = 'rgb( 0, 0, 0)';
+                let gpos1 = document.createElement('a-entity');
+                gpos1.setAttribute('geometry', 'primitive: box; width: 2; height: 2; depth: 2;');
+                gpos1.setAttribute('position', '0 1 -4');
+                gpos1.setAttribute('material', 'color:' + color);
+           
+                gpos1.setAttribute('id', 'guessposition1');
+                
+                scene.appendChild(gpos1);
+                
+                color = 'rgb( 0, 0, 0)';
+                let gpos2 = document.createElement('a-entity');
+                gpos2.setAttribute('geometry', 'primitive: box; width: 2; height: 2; depth: 2;');
+                gpos2.setAttribute('position', '3 1 -4');
+                gpos2.setAttribute('material', 'color: '+ color);
+                gpos2.setAttribute('id', 'guessposition2');
+
+                scene.appendChild(gpos2);
+
+                color = 'rgb( 0, 0, 0)';                
+                let gpos3 = document.createElement('a-entity');
+                gpos3.setAttribute('geometry', 'primitive: box; width: 2; height: 2; depth: 2;');
+                gpos3.setAttribute('position', '6 1 -4');
+                gpos3.setAttribute('material', 'color: '+ color);
+                gpos3.setAttribute('id', 'guessposition3');
+
+                scene.appendChild(gpos3);
+
+                color = 'rgb( 255, 255, 255)';                
+                let guess = document.createElement('a-entity');
+                guess.setAttribute('geometry', 'primitive: box; width: 2; height: 1; depth: 2;');
+                guess.setAttribute('position', '-2 1 -2');
+                guess.setAttribute('material', 'color: '+ color);
+                guess.setAttribute('id', 'makeguess');
+
+                scene.appendChild(guess);
+
+                document.querySelector('#guessposition1').addEventListener('click', function () {
+               
+                    console.log("clicking");
+                    let block = document.querySelector("#guessposition1");
+
+                    switch (window.GUESS_1) {
+
+                        case 0://if its black
+                            window.GUESS_1 = 1;
+                            block.setAttribute('material', 'color: rgb(255, 0, 0)');
+
+                            break;
+                        case 1://if its red
+                            window.GUESS_1 = 2;
+                            block.setAttribute('material', 'color: rgb(0, 255, 0)');
+
+                            break;
+                        case 2://if its green
+                            window.GUESS_1 = 3;
+                            block.setAttribute('material', 'color: rgb(0, 0, 255)');
+
+                            break;
+                        case 3://if its blue
+                            window.GUESS_1 = 4;
+                            block.setAttribute('material', 'color: rgb(255, 255, 0)');
+
+                            break;
+                        case 4://if its yellow
+                            window.GUESS_1 = 1;
+                            block.setAttribute('material', 'color: rgb(255, 0, 0)');
+
+                            break;
+                    }
+                });
+
+                    document.querySelector('#guessposition2').addEventListener('click', function () {
+                        console.log("clicking");
+
+                        let block = document.querySelector("#guessposition2");
+
+                        switch (window.GUESS_2) {
+                            case 0://if its black
+                                window.GUESS_2 = 1;
+                                block.setAttribute('material', 'color: rgb(255, 0, 0)');
+
+                                break;
+                            case 1://if its red
+                                window.GUESS_2 = 2;
+                                block.setAttribute('material', 'color: rgb(0, 255, 0)');
+
+                                break;
+                            case 2://if its green
+                                window.GUESS_2 = 3;
+                                block.setAttribute('material', 'color: rgb(0, 0, 255)');
+
+                                break;
+                            case 3://if its blue
+                                window.GUESS_2 = 4;
+                                block.setAttribute('material', 'color: rgb(255, 255, 0)');
+
+                                break;
+                            case 4://if its yellow
+                                window.GUESS_2 = 1;
+                                block.setAttribute('material', 'color: rgb(255, 0, 0)');
+
+                                break;
+                        }
+
+                    });
+                    document.querySelector('#guessposition3').addEventListener('click', function () {
+                        console.log("clicking");
+
+                        let block = document.querySelector("#guessposition3");
+
+                        switch (window.GUESS_3) {
+                            case 0://if its black
+                                window.GUESS_3 = 1;
+                                block.setAttribute('material', 'color: rgb(255, 0, 0)');
+
+                                break;
+                            case 1://if its red
+                                window.GUESS_3 = 2;
+                                block.setAttribute('material', 'color: rgb(0, 255, 0)');
+
+                                break;
+                            case 2://if its green
+                                window.GUESS_3 = 3;
+                                block.setAttribute('material', 'color: rgb(0, 0, 255)');
+
+                                break;
+                            case 3://if its blue
+                                window.GUESS_3 = 4;
+                                block.setAttribute('material', 'color: rgb(255, 255, 0)');
+
+                                break;
+                            case 4://if its yellow
+                                window.GUESS_3 = 1;
+                                block.setAttribute('material', 'color: rgb(255, 0, 0)');
+
+                                break;
+                        }
+
+                    });
+
+                    document.querySelector('#makeguess').addEventListener('click', function () {
+
+                    if (!window.ALL_CORRECT) {
+
+
+
+                        let colour1;
+                        let colour2;
+                        let colour3;
+
+                        switch (window.GUESS_1) {
+                            case 0://if its black
+                                colour1 = { r: 255, g: 0, b: 0 };//send red as default
+
+                                break;
+                            case 1://if its red
+                                colour1 = { r: 255, g: 0, b: 0 };
+
+                                break;
+                            case 2://if its green
+                                colour1 = { r: 0, g: 255, b: 0 };
+
+                                break;
+                            case 3://if its blue
+                                colour1 = { r: 0, g: 0, b: 255 };
+
+                                break;
+                            case 4://if its yellow
+                                colour1 = { r: 255, g: 255, b: 0 };
+
+                                break;
+                        }
+
+                        switch (window.GUESS_2) {
+
+                            case 0://if its black
+                                colour2 = { r: 255, g: 0, b: 0 };//send red as default
+
+                                break;
+                            case 1://if its red
+                                colour2 = { r: 255, g: 0, b: 0 };
+
+                                break;
+                            case 2://if its green
+                                colour2 = { r: 0, g: 255, b: 0 };
+
+                                break;
+                            case 3://if its blue
+                                colour2 = { r: 0, g: 0, b: 255 };
+
+                                break;
+                            case 4://if its yellow
+                                colour2 = { r: 255, g: 255, b: 0 };
+
+                                break;
+                        }
+
+                        switch (window.GUESS_3) {
+
+                            case 0://if its black
+                                colour3 = { r: 255, g: 0, b: 0 };//send red as default
+
+                                break;
+                            case 1://if its red
+                                colour3 = { r: 255, g: 0, b: 0 };
+
+                                break;
+                            case 2://if its green
+                                colour3 = { r: 0, g: 255, b: 0 };
+
+                                break;
+                            case 3://if its blue
+                                colour3 = { r: 0, g: 0, b: 255 };
+
+                                break;
+                            case 4://if its yellow
+                                colour3 = { r: 255, g: 255, b: 0 };
+
+                                break;
+                        }
+
+                        window.NUM_GUESSES += 1;
+
+                        let guessData = {
+                            pos1Colour: colour1,
+                            pos2Colour: colour2,
+                            pos3Colour: colour3,
+                            numGuesses: window.NUM_GUESSES
+                        }
+                        console.log("making guess");
+                        console.log(colour1.r);
+                        let guessDataJSON = JSON.stringify(guessData);
+                        socket.emit('guess', guessDataJSON);
+                    }
+                    });
+
+                });
+
+            socket.on('newgame', function(positionColoursJSON) {
+
+               let positionColours = JSON.parse(positionColoursJSON);
+
+               let gp1 = document.querySelector('#guessposition1');
+               let gp2 = document.querySelector('#guessposition2');
+               let gp3 = document.querySelector('#guessposition3');
+
+               let tpos1 = document.querySelector('#trueposition1');
+               let tpos2 = document.querySelector('#trueposition2');
+               let tpos3 = document.querySelector('#trueposition3');
+
+               let guess = document.querySelector('#makeguess');
+
+               gp1.setAttribute('material','color: rgb(0,0,0)');
+               gp2.setAttribute('material','color: rgb(0,0,0)');
+               gp3.setAttribute('material','color: rgb(0,0,0)');
+
+               let color = "rgb(" + positionColours.pos1Colour.r + "," + positionColours.pos1Colour.g + "," + positionColours.pos1Colour.b + ")";
+               tpos1.setAttribute('material','color: ' + color);
+               color = "rgb(" + positionColours.pos2Colour.r + "," + positionColours.pos2Colour.g + "," + positionColours.pos2Colour.b + ")";
+               tpos2.setAttribute('material','color: ' + color);
+               color = "rgb(" + positionColours.pos3Colour.r + "," + positionColours.pos3Colour.g + "," + positionColours.pos3Colour.b + ")";
+               tpos3.setAttribute('material','color: ' + color);
+
+               tpos1.setAttribute('visible', 'false');
+               tpos2.setAttribute('visible', 'false');
+               tpos3.setAttribute('visible', 'false');
+
+               guess.setAttribute('material','color: rgb(255,255,255)');
+
+               window.GUESS_1 = 0;
+               window.GUESS_2 = 0;
+               window.GUESS_3 = 0;
+
+               console.log("New game has started.");
+
+            });
+            //correct guesses
+            socket.on('position1Correct', function(idJSON) {
+                let pos = document.querySelector('#trueposition1');
+                pos.setAttribute('visible','true');
+            });
+            socket.on('position2Correct', function(data) {
+
+                let pos = document.querySelector('#trueposition2');
+                pos.setAttribute('visible','true');
+            });
+            socket.on('position3Correct', function(data) {
+
+                let pos = document.querySelector('#trueposition3');
+                pos.setAttribute('visible','true');
+            });
+
+            //incorrect guesses
+            socket.on('position1NOTCorrect', function(idJSON) {
+                
+                let block = document.querySelector("#guessposition1");
+                
+                block.setAttribute('material', 'color: rgb(0, 0, 0)');
+
+                let pos = document.querySelector('#trueposition1');
+                pos.setAttribute('visible','false');
+            });
+            socket.on('position2NOTCorrect', function(data) {
+
+                let block = document.querySelector("#guessposition2");
+               
+                block.setAttribute('material','color: rgb(0, 0, 0)');
+
+                let pos = document.querySelector('#trueposition2');
+                pos.setAttribute('visible','false');
+            });
+            socket.on('position3NOTCorrect', function(data) {
+
+                let block = document.querySelector("#guessposition3");
+          
+                block.setAttribute('material','color: rgb(0, 0, 0)');
+
+                let pos = document.querySelector('#trueposition3');
+                pos.setAttribute('visible','false');
+            });
+
+            //allcorrect
+            socket.on('allCorrect', function(data) {
+
+                window.ALL_CORRECT = true;
+                let pos = document.querySelector('#makeguess');
+                pos.setAttribute('material', 'color: green');
+                console.log("Game has ended, waiting for new game to start.");
+                window.NUM_GUESSES = 0;
+            });
+
+            socket.on('checkstatus', function(data) {
+                console.log("checking status");
+                let isFinished;
+                if(window.ALL_CORRECT)
+                {
+                    isFinished = true;
+                    
+                }
+                else
+                {
+                    isFinished = true;
+                }
+                let DataJSON = JSON.stringify(isFinished);
+                    socket.emit('updatestatus', DataJSON);
+            });
+
+            socket.on('score', function(data)
+            {
+                console.log("giving score");
+                let score = JSON.parse(data);
+                console.log(score);
+            });
+
+        </script>
+
+    </head>
+    <body>
+   
+    </body>
+</html>

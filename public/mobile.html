@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+    <head>
+
+    </head>
+    <body>
+        <h1>This is the mobile client</h1>
+
+        <script src="/socket.io/socket.io.js"></script>
+        
+        <div id="menuOption1">
+            Position 1 colour:
+            <button id="redp1" style="background-color:red; color:black;">RED</button>
+            <button id="greenp1" style="background-color:green; color:whitesmoke;">GREEN</button>
+            <button id="bluep1" style="background-color:blue; color:whitesmoke;">BLUE</button>
+            <button id="yellowp1" style="background-color:yellow; color:black;">YELLOW</button>
+           
+        </div>
+        <div id="menuOption2">
+            Position 2 colour:
+            <button id="redp2" style="background-color:red; color:black;">RED</button>
+            <button id="greenp2" style="background-color:green; color:whitesmoke;">GREEN</button>
+            <button id="bluep2" style="background-color:blue; color:whitesmoke;">BLUE</button>
+            <button id="yellowp2" style="background-color:yellow; color:black;">YELLOW</button>
+           
+        </div>
+        <div id="menuOption2">
+            Position 3 colour:
+            <button id="redp3" style="background-color:red; color:black;">RED</button>
+            <button id="greenp3" style="background-color:green; color:whitesmoke;">GREEN</button>
+            <button id="bluep3" style="background-color:blue; color:whitesmoke;">BLUE</button>
+            <button id="yellowp3" style="background-color:yellow; color:black;">YELLOW</button>
+           
+        </div>
+        <div id="confirm">
+            Confirm Colours
+            <button id="confirm" style="background-color:black; color:white;">CONFIRM</button>
+        </div>
+        <script>
+            let socket = io();
+
+            //default connect event
+            socket.on('connect', function() {
+                console.log("mobile connected!");
+            });
+
+            socket.on('color_change', function(data) {
+                // //create rgb color string for css
+                let colorStr = 'rgb(' + data.r + ',' + data.g + ',' + data.b + ')';
+                // console.log("color received: " + colorStr);
+
+                // //set background color with received color
+                // document.body.style.backgroundColor = colorStr;
+
+
+
+
+                //DO PADDING COLOUR CHANGE / LOCKIN PADDING
+            });
+
+            document.querySelector('#redp1').addEventListener('click', function() {
+                socket.emit('redp1');
+            });
+            document.querySelector('#redp2').addEventListener('click', function() {
+                socket.emit('redp2');
+            });
+            document.querySelector('#redp3').addEventListener('click', function() {
+                socket.emit('redp3');
+            });
+            document.querySelector('#greenp1').addEventListener('click', function() {
+                socket.emit('greenp1');
+            });
+            document.querySelector('#greenp2').addEventListener('click', function() {
+                socket.emit('greenp2');
+            });
+            document.querySelector('#greenp3').addEventListener('click', function() {
+                socket.emit('greenp3');
+            });
+            document.querySelector('#bluep1').addEventListener('click', function() {
+                socket.emit('bluep1');
+            });
+            document.querySelector('#bluep2').addEventListener('click', function() {
+                socket.emit('bluep2');
+            });
+            document.querySelector('#bluep3').addEventListener('click', function() {
+                socket.emit('bluep3');
+            });
+            document.querySelector('#yellowp1').addEventListener('click', function() {
+                socket.emit('yellowp1');
+            });
+            document.querySelector('#yellowp2').addEventListener('click', function() {
+                socket.emit('yellowp2');
+            });
+            document.querySelector('#yellowp3').addEventListener('click', function() {
+                socket.emit('yellowp3');
+            });
+            document.querySelector('#confirm').addEventListener('click', function() {
+                socket.emit('confirm');
+            });
+
+        </script>
+        <!-- somehow have a div to show what the player's guesses are and other stats -->
+        <div id="colour1">
+            
+        </div>
+        <div id="colour2">
+            
+        </div>
+        <div id="colour3">
+            
+        </div>
+
+            <!-- create aframe elements here -->
+    </body>
+</html>
